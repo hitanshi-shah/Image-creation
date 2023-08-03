@@ -41,7 +41,7 @@ data "aws_ami" "windows" {
     values = ["hvm"]
   }
 
-  owners = ["132821624660"] # Canonical
+  owners = ["922929446471"] # Canonical
 }
 
 output "ami_id"{
