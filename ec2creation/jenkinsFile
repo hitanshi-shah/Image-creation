@@ -1,0 +1,70 @@
+pipeline {
+  agent any
+    parameters {
+        //string(name: 'input')
+        choice(name:  'user_service' , choices: ['blue-green' , 'user-creation' , 'user-policy'] , description : 'select the service')
+        choice(name: 'traffic_distribution', choices: ['blue','blue-90','split','green-90','green','not-applicable'] , description: 'select traffic distribution only for blue/green deployment service')
+        choice(name: 'terraform_action', choices: ["apply","destroy","destroyblue"], description: 'Action') 
+        string(name: 'aws_iam_user', defaultValue: '', description: 'Enter iam user name which needs to be created, only for user-role-creation or user-policy apply')
+        string(name: 'policy_arn', defaultValue: '', description: 'Enter policy arn which needs to be attached to the iam user')
+    }
+  environment {
+
+       TF_VAR_traffic_distribution="${params.traffic_distribution}"
+       action="${params.terraform_action}"
+       TF_VAR_aws_iam_user="${params.aws_iam_user}" 
+       TF_VAR_policy_arn="${params.policy_arn}"
+   }
+stages {
+    stage('Resource Groups : TF INIT') {
+      
+      steps {
+         dir("./${params.user_service}") {
+          script {
+            sh "pwd"
+            sh "sudo rm -rf .terraform; sudo terraform init"
+          } 
+         
+          }
+      }
+    }
+      
+
+    stage('Resource Groups : TF PLAN') {
+      steps {
+           dir("./${params.user_service}") {
+          script {
+               def planDestroy = ""
+                  if ("${params.terraform_action}"== "destroy") {
+                      planDestroy = "-destroy"
+                  }
+                   if ("${params.user_service}" == "blue-green") {
+                    sh "sudo terraform plan  ${planDestroy} -out ../plan-output -var-file=input.tfvars.json  -var=traffic_distribution=$TF_VAR_traffic_distribution"}
+                    else   if ("${params.user_service}" == "user-creation") {
+                    sh "sudo terraform plan  ${planDestroy} -out ../plan-output -var-file=input.tfvars.json  -var=aws_iam_user=$TF_VAR_aws_iam_user"}
+                  else if ("${params.user_service}" == "user-policy") {
+                   sh "sudo terraform plan  ${planDestroy} -out ../plan-output -var-file=input.tfvars.json  -var=aws_iam_user=$TF_VAR_aws_iam_user -var=policy_arn=$TF_VAR_policy_arn"}
+                  }
+          }
+                  
+            }
+    }
+    stage('Resource Groups : TF Apply') {
+      
+      steps {
+           dir("./${params.user_service}") {
+          script {
+
+                    sh '''
+                     sudo terraform apply -auto-approve ../plan-output 
+                    '''
+               
+          }
+                }
+            }
+      }
+      
+  } 
+  
+ }
+        

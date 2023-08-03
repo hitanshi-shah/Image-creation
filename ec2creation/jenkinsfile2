@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+    // environment {
+    //     // Define your environment variables here, if needed
+    // }
+    stages {
+        stage('Windows VM Provisioning on AWS Cloud') {
+            steps {
+                    script {
+                    // Assuming you define environment variables earlier, you can use them directly
+                    if (!fileExists("test.txt")) {
+                       build job: 'anfVolumeCreation', propagate: true, wait: true, parameters: [string(name: 'dataCenter', value: params.dataCenter)]
+                    } else {
+                        sh 'cat test.txt'
+                    }
+                    }    
+                }
+        }
+        
+    }
+}    
+
+
+
+
+
+
+
+
