@@ -2,7 +2,7 @@ def INSTANCE_ID=""
 pipeline{
   agent any
   environment{
-                action="${params.terraform_action}"
+                                action="${params.terraform_action}"
 				TF_VAR_subnet_id="${params.subnet_id}"
 				TF_VAR_security_group_id="${params.security_group_id}"
 				TF_VAR_key_pair="${key_pair}" 
